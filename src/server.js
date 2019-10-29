@@ -1,24 +1,20 @@
-// Dependencies
-var express = require('express');
-var http = require('http');
-var path = require('path');
-var socketIO = require('socket.io');var app = express();
+const http = require('http');
+const socketIO = require('socket.io');
+const app = require('./app')
 
-var server = http.Server(app);
+const server = http.Server(app);
 
-var io = socketIO(server);app.set('port', 5000);
-
-app.use('/', express.static(__dirname + '/'));// Routing
-
-app.get('/', function(request, response) {
-  response.sendFile(path.join(__dirname, 'index.html'));
-});// Starts the server.
+const io = socketIO(server);
 
 server.listen(5000, function() {
   console.log('Starting server on port 5000');
 });
 
-var players = {};
+setInterval(function() {
+  io.sockets.emit('state', players);
+}, 1000 / 60);
+
+const players = {};
 io.on('connection', function(socket) {
   socket.on('new player', function() {
     players[socket.id] = {
@@ -26,6 +22,11 @@ io.on('connection', function(socket) {
       y: 300
     };
   });
+
+  socket.on('player quit', function() {
+    delete players[socket.id]
+  });
+
   socket.on('movement', function(data) {
     var player = players[socket.id] || {};
     if (data.left) {
@@ -42,7 +43,3 @@ io.on('connection', function(socket) {
     }
   });
 });
-
-setInterval(function() {
-  io.sockets.emit('state', players);
-}, 1000 / 60);

@@ -1,12 +1,13 @@
-var socket = io();
+const socket = io();
 
-var movement = {
+const movement = {
   up: false,
   down: false,
   left: false,
   right: false
 }
-document.addEventListener('keydown', function(event) {
+
+document.addEventListener('keydown', function (event) {
   switch (event.keyCode) {
     case 65: // A
       movement.left = true;
@@ -22,7 +23,8 @@ document.addEventListener('keydown', function(event) {
       break;
   }
 });
-document.addEventListener('keyup', function(event) {
+
+document.addEventListener('keyup', function (event) {
   switch (event.keyCode) {
     case 65: // A
       movement.left = false;
@@ -39,22 +41,41 @@ document.addEventListener('keyup', function(event) {
   }
 });
 
-socket.emit('new player');
-setInterval(function() {
-  socket.emit('movement', movement);
-}, 1000 / 60);
+window.onload = function () {
+  init()
+}
 
-var canvas = document.getElementById('canvas');
-canvas.width = 800;
-canvas.height = 600;
-var context = canvas.getContext('2d');
-socket.on('state', function(players) {
-  context.clearRect(0, 0, 800, 600);
-  context.fillStyle = 'green';
-  for (var id in players) {
-    var player = players[id];
-    context.beginPath();
-    context.arc(player.x, player.y, 10, 0, 2 * Math.PI);
-    context.fill();
-  }
-});
+window.onbeforeunload = function () {
+  destroy()
+}
+
+function init () {
+  socket.emit('new player');
+
+  const canvas = document.getElementById('canvas');
+  canvas.width = 800;
+  canvas.height = 600;
+
+  const context = canvas.getContext('2d');
+
+  socket.on('state', function (players) {
+    context.clearRect(0, 0, 800, 600);
+    context.fillStyle = 'green';
+
+    for (const id in players) {
+      const player = players[id];
+
+      context.beginPath();
+      context.arc(player.x, player.y, 10, 0, 2 * Math.PI);
+      context.fill();
+    }
+  });
+
+  setInterval(function () {
+    socket.emit('movement', movement);
+  }, 1000 / 60);
+}
+
+function destroy () {
+  socket.emit('player quit');
+}
